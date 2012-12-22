@@ -1,15 +1,16 @@
 ﻿Crafty.c("MoveTo", {
 	_speed: 2,
 
-	_onmousedown: function (e) {
+	_dblClickOnMap: function (e) {
 		if (this.disregardMouseInput) {
 			return;
 		}
-		// clear any existing EnterFrame handlers
-		this._stopMoving();
 
-		this._target = { x: e.realX, y: e.realY };
-		this.bind("EnterFrame", this._enterFrame);
+        // clear any existing EnterFrame handlers
+        this._stopMoving();
+
+        this._target = { x: e.realX - this._w/2, y: e.realY - 4*this._h/5 };   // TODO provide a better way to place the sprite
+        this.bind("EnterFrame", this._enterFrame);
 	},
 
 	_stopMoving: function () {
@@ -24,6 +25,7 @@
 
 		// target (almost) reached - jump the last part.
 		// We could be more fancy (circular check instead of square), but don't want to pay the sqrt penalty each frame.
+
 		if (Math.abs(this._target.x - this.x) < this._speed && Math.abs(this._target.y - this.y) < this._speed) {
 			var prev_pos = {
 				x: this.x,
@@ -35,9 +37,9 @@
 			this._stopMoving();
 
 			this.trigger('Moved', prev_pos);
-			this.trigger('NewDirection', { x: 0, y: 0 });
+			this.trigger('NewDirection', { x: 0, y: 0 }, this);
 			return;
-		};
+		}
 
 		// Pixels to move are calculated from location and target every frame to handle the case when something else (IE, collision detection logic) changes our position.
 		// Some cleaver optimization could probably eliminate the sqrt cost...
@@ -47,7 +49,7 @@
 
 		// Triggered when direction changes - either because of a mouse click, or something external
 		if (Math.abs(movX - this.oldDirection.x) > 0.1 || Math.abs(movY - this.oldDirection.y) > 0.1) {
-			this.trigger("NewDirection", { x: movX, y: movY })
+			this.trigger("NewDirection", { x: movX, y: movY }, this)
 		}
 		this.oldDirection = { x: movX, y: movY };
 
@@ -65,9 +67,8 @@
 
 	init: function () {
 		this.requires("Mouse");
-		this.oldDirection = { x: 0, y: 0 }
+		this.oldDirection = { x: 0, y: 0 };
 
-		Crafty.addEvent(this, Crafty.stage.elem, "mousedown", this._onmousedown);
-
+        this.bind("DblClickOnMap", this._dblClickOnMap);
 	}
 });
